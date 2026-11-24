@@ -12,8 +12,8 @@ void tambahBarang() {
     int pengingatStok;
     while(1){
         printf("Masukkan kode barang               : ");
-        gets(kodeBarang);
-        if(kodeBarang[0] == '\0' || kodeBarang[0] == ' '){
+        fgets(kodeBarang, sizeof(kodeBarang), stdin);
+        if(kodeBarang[0] == '\n' || kodeBarang[0] == ' '){
             printf("[ERROR] Kode barang tidak valid. Silakan masukkan kode barang yang valid.\n");
             continue;
         }
@@ -27,8 +27,8 @@ void tambahBarang() {
     }
     while(1){
         printf("Masukkan nama barang               : ");
-        gets(namaBarang);
-        if(namaBarang[0] == '\0' || namaBarang[0] == ' '){
+        fgets(namaBarang, sizeof(namaBarang), stdin);
+        if(namaBarang[0] == '\n' || namaBarang[0] == ' '){
             printf("[ERROR] Nama barang tidak valid. Silakan masukkan nama barang yang valid.\n");
             continue;
         }
@@ -63,7 +63,6 @@ void tambahBarang() {
     }
     printf("Kode barang: %s\nNama barang: %s\nHarga barang: %d\nStok barang: %d\nPengingat stok: %d", kodeBarang, namaBarang, hargaBarang, stokBarang, pengingatStok);
 }
-
 
 int main() {
     tambahBarang();
