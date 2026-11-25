@@ -1,225 +1,210 @@
 #include <stdio.h>
 
 #define MAX_BARANG 100
-#define LEN_KODE   10
-#define LEN_NAMA   50
-#define LEN_SATUAN 10
+#define LEN_KODE 20
+#define LEN_NAMA 50
 
-int panjangString(const char *teks) {
-    int panjang = 0;
-    while (teks[panjang] != '\0')
-        panjang++;
-    return panjang;
-}
-
-int bandingString(const char *kiri, const char *kanan) {
+// Fungsi pembantu untuk membandingkan dua string tanpa <string.h>
+int stringSama(const char a[], const char b[]) {
     int i = 0;
-    while (kiri[i] != '\0' && kanan[i] != '\0') {
-        if (kiri[i] != kanan[i])
-            return kiri[i] - kanan[i];
+    while (a[i] != '\0' || b[i] != '\0') {
+        if (a[i] != b[i]) {
+            return 0;
+        }
         i++;
     }
-    return kiri[i] - kanan[i];
+    return 1;
 }
 
-void salinString(char *tujuan, const char *sumber, int ukuran) {
+// Fungsi pembantu untuk menyalin string tanpa <string.h>
+void stringSalin(char tujuan[], const char sumber[]) {
     int i = 0;
-    if (ukuran <= 0)
-        return;
-
-    while (i < ukuran - 1 && sumber[i] != '\0') {
+    while (sumber[i] != '\0') {
         tujuan[i] = sumber[i];
         i++;
     }
     tujuan[i] = '\0';
 }
 
-void bersihkanBuffer(void) {
-    char c;
-    while (scanf("%c", &c) == 1 && c != '\n') {
-    }
-}
-
-void bacaString(const char *prompt, char *tujuan, int panjang) {
-    fputs(prompt, stdout);
-    if (fgets(tujuan, panjang, stdin) == NULL) {
-        tujuan[0] = '\0';
-        return;
-    }
-    for (int i = 0; i < panjang && tujuan[i] != '\0'; i++) {
-        if (tujuan[i] == '\n' || tujuan[i] == '\r') {
-            tujuan[i] = '\0';
+// Fungsi untuk membersihkan newline atau spasi di akhir string
+void bersihkanNewline(char str[]) {
+    int i = 0;
+    while (str[i] != '\0') {
+        if (str[i] == '\r' || str[i] == '\n') {
+            str[i] = '\0';
             break;
         }
+        i++;
     }
 }
 
-int bacaInt(const char *prompt, int min) {
-    int nilai;
-    while (1) {
-        printf("%s", prompt);
-        if (scanf("%d", &nilai) == 1 && nilai >= min) {
-            bersihkanBuffer();
-            return nilai;
-        }
-        bersihkanBuffer();
-        printf("  Input tidak valid (harus angka >= %d). Coba lagi.\n", min);
-    }
+// Membersihkan sisa input di stdin buffer
+void bersihkanBuffer(void) {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) { }
 }
 
-double bacaDouble(const char *prompt, double min) {
-    double nilai;
-    while (1) {
-        printf("%s", prompt);
-        if (scanf("%lf", &nilai) == 1 && nilai >= min) {
-            bersihkanBuffer();
-            return nilai;
-        }
-        bersihkanBuffer();
-        printf("  Input tidak valid (harus angka >= %.0f). Coba lagi.\n", min);
-    }
-}
-
-int cariIndeksKode(char kode[][LEN_KODE], int n, const char *kunci) {
-    for (int i = 0; i < n; i++) {
-        if (bandingString(kode[i], kunci) == 0)
+// 5. Mencari barang berdasarkan kode (mengembalikan indeks atau -1 jika tidak ada)
+int cariBarang(char kode[][LEN_KODE], int jumlah, char kode_cari[]) {
+    for (int i = 0; i < jumlah; i++) {
+        if (stringSama(kode[i], kode_cari)) {
             return i;
+        }
     }
     return -1;
 }
 
-void tampilDetailBarang(char kode[][LEN_KODE], char nama[][LEN_NAMA],
-                        char satuan[][LEN_SATUAN], int stok[], int stokMin[],
-                        double harga[], int index) {
-    printf("\n====================================\n");
-    printf("            DETAIL BARANG\n");
-    printf("====================================\n");
-    printf("Kode          : %s\n", kode[index]);
-    printf("Nama          : %s\n", nama[index]);
-    printf("Stok          : %d %s\n", stok[index], satuan[index]);
-    printf("Batas Minimum : %d %s\n", stokMin[index], satuan[index]);
-    printf("Harga         : Rp %.0f / %s\n", harga[index], satuan[index]);
-    printf("Status        : %s\n",
-           stok[index] < stokMin[index] ? "MENIPIS (perlu restock)" : "Aman");
-    printf("====================================\n");
-}
-
+// 1. Memasukkan data alat tulis baru (tanpa satuan: kode, nama, harga satuan, stok, batas minimum)
 void tambahBarang(char kode[][LEN_KODE], char nama[][LEN_NAMA],
-                  char satuan[][LEN_SATUAN], int stok[], int stokMin[],
-                  double harga[], int *n) {
-    if (*n >= MAX_BARANG) {
-        printf("[ERROR] Data penuh (maks %d barang).\n", MAX_BARANG);
+                  int harga[], int stok[], int minimum[], int *jumlah) {
+    if (*jumlah >= MAX_BARANG) {
+        printf("[ERROR] Kapasitas penyimpanan penuh (maksimal %d barang)!\n", MAX_BARANG);
         return;
     }
 
-    char kodeBaru[LEN_KODE], namaBaru[LEN_NAMA], satuanBaru[LEN_SATUAN];
+    char kodeBaru[LEN_KODE];
+    char namaBaru[LEN_NAMA];
+    int hargaBaru;
+    int stokBaru;
+    int minimumBaru;
 
     printf("\n============================================\n");
     printf("         TAMBAH DATA ALAT TULIS\n");
     printf("============================================\n");
 
+    // Input kode barang dengan validasi & tolak kode duplikat
     while (1) {
-        bacaString("Kode barang               : ", kodeBaru, sizeof(kodeBaru));
-        if (panjangString(kodeBaru) == 0 || kodeBaru[0] == ' ') {
-            printf("[ERROR] Kode tidak boleh kosong atau diawali spasi.\n");
+        printf("Masukkan kode barang               : ");
+        if (fgets(kodeBaru, sizeof(kodeBaru), stdin) == NULL) continue;
+        bersihkanNewline(kodeBaru);
+
+        if (kodeBaru[0] == '\0' || kodeBaru[0] == ' ') {
+            printf("[ERROR] Kode barang tidak valid. Silakan coba lagi.\n");
             continue;
         }
-        if (cariIndeksKode(kode, *n, kodeBaru) != -1) {
-            printf("[ERROR] Kode %s sudah terdaftar! Gunakan kode lain.\n", kodeBaru);
+
+        if (cariBarang(kode, *jumlah, kodeBaru) != -1) {
+            printf("[ERROR] Kode barang \"%s\" sudah terdaftar! Gunakan kode unik.\n", kodeBaru);
             continue;
         }
         break;
     }
 
+    // Input nama barang
     while (1) {
-        bacaString("Nama barang               : ", namaBaru, sizeof(namaBaru));
-        if (panjangString(namaBaru) == 0 || namaBaru[0] == ' ') {
-            printf("[ERROR] Nama tidak boleh kosong atau diawali spasi.\n");
+        printf("Masukkan nama barang               : ");
+        if (fgets(namaBaru, sizeof(namaBaru), stdin) == NULL) continue;
+        bersihkanNewline(namaBaru);
+
+        if (namaBaru[0] == '\0' || namaBaru[0] == ' ') {
+            printf("[ERROR] Nama barang tidak valid. Silakan coba lagi.\n");
             continue;
         }
         break;
     }
 
-    bacaString("Satuan (pcs/rim/botol/..) : ", satuanBaru, sizeof(satuanBaru));
-    if (panjangString(satuanBaru) == 0) {
-        salinString(satuanBaru, "pcs", sizeof(satuanBaru));
+    // Input harga satuan
+    while (1) {
+        printf("Masukkan harga barang (Rp)         : ");
+        if (scanf("%d", &hargaBaru) == 1 && hargaBaru >= 0) {
+            bersihkanBuffer();
+            break;
+        }
+        bersihkanBuffer();
+        printf("[ERROR] Harga tidak boleh negatif dan harus berupa angka!\n");
     }
 
-    int    stokBaru    = bacaInt("Jumlah stok               : ", 0);
-    int    stokMinBaru = bacaInt("Batas minimum             : ", 0);
-    double hargaBaru   = bacaDouble("Harga per satuan (Rp)     : ", 0);
+    // Input stok
+    while (1) {
+        printf("Masukkan stok barang               : ");
+        if (scanf("%d", &stokBaru) == 1 && stokBaru >= 0) {
+            bersihkanBuffer();
+            break;
+        }
+        bersihkanBuffer();
+        printf("[ERROR] Stok tidak boleh negatif dan harus berupa angka!\n");
+    }
 
-    int i = *n;
-    salinString(kode[i], kodeBaru, LEN_KODE);
-    salinString(nama[i], namaBaru, LEN_NAMA);
-    salinString(satuan[i], satuanBaru, LEN_SATUAN);
-    stok[i]    = stokBaru;
-    stokMin[i] = stokMinBaru;
-    harga[i]   = hargaBaru;
-    (*n)++;
+    // Input batas minimum
+    while (1) {
+        printf("Masukkan batas stok minimum        : ");
+        if (scanf("%d", &minimumBaru) == 1 && minimumBaru >= 0) {
+            bersihkanBuffer();
+            break;
+        }
+        bersihkanBuffer();
+        printf("[ERROR] Batas minimum tidak boleh negatif dan harus berupa angka!\n");
+    }
 
-    printf("\n[SUKSES] Barang \"%s\" berhasil ditambahkan.\n", namaBaru);
-    if (stokBaru < stokMinBaru)
-        printf("[!] Peringatan: stok %s sudah di bawah batas minimum!\n", namaBaru);
+    int idx = *jumlah;
+    stringSalin(kode[idx], kodeBaru);
+    stringSalin(nama[idx], namaBaru);
+    harga[idx] = hargaBaru;
+    stok[idx] = stokBaru;
+    minimum[idx] = minimumBaru;
+    (*jumlah)++;
+
+    printf("\n[SUKSES] Barang \"%s\" (%s) berhasil ditambahkan.\n", namaBaru, kodeBaru);
+    if (stokBaru < minimumBaru) {
+        printf("[PERINGATAN] Stok awal berada di bawah batas minimum!\n");
+    }
 }
 
-void tampilkanStok(char kode[][LEN_KODE], char nama[][LEN_NAMA],
-                   char satuan[][LEN_SATUAN], int stok[], int stokMin[],
-                   double harga[], int n) {
-    if (n == 0) {
-        printf("\nBelum ada data barang.\n");
+// 2. Menampilkan seluruh daftar alat tulis
+void tampilBarang(char kode[][LEN_KODE], char nama[][LEN_NAMA],
+                  int harga[], int stok[], int minimum[], int jumlah) {
+    if (jumlah == 0) {
+        printf("\nBelum ada data barang!\n");
         return;
     }
-    printf("\n===================================================================================\n");
-    printf("                              DAFTAR PERSEDIAAN ATK\n");
-    printf("===================================================================================\n");
-    printf("%-4s %-8s %-24s %-6s %-8s %-8s %-12s %-8s\n",
-           "No", "Kode", "Nama Barang", "Stok", "Satuan", "Minimum",
-           "Harga (Rp)", "Status");
-    printf("-----------------------------------------------------------------------------------\n");
-    for (int i = 0; i < n; i++) {
-        printf("%-4d %-8s %-24s %-6d %-8s %-8d %-12.0f %-8s\n",
-               i + 1, kode[i], nama[i], stok[i], satuan[i], stokMin[i],
-               harga[i], stok[i] < stokMin[i] ? "MENIPIS" : "Aman");
+
+    printf("\n=========================================================================\n");
+    printf("                          DAFTAR PERSEDIAAN ATK\n");
+    printf("=========================================================================\n");
+    printf("%-4s %-12s %-24s %-12s %-8s %-10s %-10s\n",
+           "No", "Kode", "Nama Barang", "Harga (Rp)", "Stok", "Minimum", "Status");
+    printf("-------------------------------------------------------------------------\n");
+
+    for (int i = 0; i < jumlah; i++) {
+        printf("%-4d %-12s %-24s %-12d %-8d %-10d %-10s\n",
+               i + 1, kode[i], nama[i], harga[i], stok[i], minimum[i],
+               stok[i] < minimum[i] ? "MENIPIS" : "Aman");
     }
-    printf("-----------------------------------------------------------------------------------\n");
+    printf("-------------------------------------------------------------------------\n");
 }
 
+// Menampilkan detail 1 barang
+void tampilDetailBarang(char kode[][LEN_KODE], char nama[][LEN_NAMA],
+                        int harga[], int stok[], int minimum[], int index) {
+    printf("\n====================================\n");
+    printf("            DETAIL BARANG\n");
+    printf("====================================\n");
+    printf("Kode          : %s\n", kode[index]);
+    printf("Nama          : %s\n", nama[index]);
+    printf("Harga         : Rp%d\n", harga[index]);
+    printf("Stok          : %d\n", stok[index]);
+    printf("Batas Minimum : %d\n", minimum[index]);
+    printf("Status        : %s\n", stok[index] < minimum[index] ? "MENIPIS (Perlu restock)" : "Aman");
+    printf("====================================\n");
+}
+
+// 3. Mencatat penambahan stok barang (menggunakan pointer)
 void tambahStok(int *stokBarang, int jumlahTambah) {
     *stokBarang = *stokBarang + jumlahTambah;
 }
 
+// 4. Mencatat pengurangan stok barang (menggunakan pointer)
 int kurangiStok(int *stokBarang, int jumlahKurang) {
     if (jumlahKurang > *stokBarang) {
-        return 0;
+        return 0; // Gagal karena melebihi stok tersedia
     }
     *stokBarang = *stokBarang - jumlahKurang;
-    return 1;
+    return 1; // Berhasil
 }
 
-void cariBarang(char kode[][LEN_KODE], char nama[][LEN_NAMA],
-                char satuan[][LEN_SATUAN], int stok[], int stokMin[],
-                double harga[], int n) {
-    if (n == 0) {
-        printf("\nBelum ada data barang.\n");
-        return;
-    }
-    char kunci[LEN_NAMA];
-    bacaString("Masukkan kode atau nama barang: ", kunci, sizeof(kunci));
-
-    for (int i = 0; i < n; i++) {
-        if (bandingString(kode[i], kunci) == 0 ||
-            bandingString(nama[i], kunci) == 0) {
-            tampilDetailBarang(kode, nama, satuan, stok, stokMin, harga, i);
-            return;
-        }
-    }
-    printf("Barang \"%s\" tidak ditemukan.\n", kunci);
-}
-
-void analisisStok(char kode[][LEN_KODE], char nama[][LEN_NAMA],
-                  char satuan[][LEN_SATUAN], int stok[], int n) {
-    if (n == 0) {
+// 6. Menampilkan barang dengan stok terbanyak dan tersedikit
+void analisisStok(char kode[][LEN_KODE], char nama[][LEN_NAMA], int stok[], int jumlah) {
+    if (jumlah == 0) {
         printf("\nBelum ada barang yang terdaftar.\n");
         return;
     }
@@ -228,101 +213,103 @@ void analisisStok(char kode[][LEN_KODE], char nama[][LEN_NAMA],
     int max = *pStok;
     int min = *pStok;
 
-    for (int i = 1; i < n; i++) {
-        if (*(pStok + i) > max)
+    for (int i = 1; i < jumlah; i++) {
+        if (*(pStok + i) > max) {
             max = *(pStok + i);
-        if (*(pStok + i) < min)
+        }
+        if (*(pStok + i) < min) {
             min = *(pStok + i);
+        }
     }
 
     printf("\n============================================\n");
-    printf("     BARANG DENGAN STOK TERBANYAK (%d)\n", max);
+    printf("        BARANG DENGAN STOK TERBANYAK (%d)\n", max);
     printf("============================================\n");
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < jumlah; i++) {
         if (*(pStok + i) == max) {
-            printf("Kode : %-8s | Nama : %-22s | Stok : %d %s\n",
-                   kode[i], nama[i], *(pStok + i), satuan[i]);
+            printf("Kode : %-10s | Nama : %-20s | Stok : %d\n", kode[i], nama[i], *(pStok + i));
         }
     }
 
     printf("\n============================================\n");
-    printf("     BARANG DENGAN STOK TERSEDIKIT (%d)\n", min);
+    printf("        BARANG DENGAN STOK TERSEDIKIT (%d)\n", min);
     printf("============================================\n");
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < jumlah; i++) {
         if (*(pStok + i) == min) {
-            printf("Kode : %-8s | Nama : %-22s | Stok : %d %s\n",
-                   kode[i], nama[i], *(pStok + i), satuan[i]);
+            printf("Kode : %-10s | Nama : %-20s | Stok : %d\n", kode[i], nama[i], *(pStok + i));
         }
     }
 }
 
-int periksaPeringatan(char kode[][LEN_KODE], char nama[][LEN_NAMA],
-                      char satuan[][LEN_SATUAN], int stok[], int stokMin[],
-                      int n) {
-    if (n == 0) {
+// 7. Memberikan peringatan jika stok berada di bawah batas minimum
+void periksaPeringatan(char kode[][LEN_KODE], char nama[][LEN_NAMA],
+                       int stok[], int minimum[], int jumlah) {
+    if (jumlah == 0) {
         printf("\nBelum ada data barang.\n");
-        return 0;
+        return;
     }
 
-    int jumlah = 0;
+    int count = 0;
     printf("\n=========================================================================\n");
-    printf("                 PERINGATAN STOK DI BAWAH BATAS MINIMUM\n");
+    printf("                  PERINGATAN STOK DI BAWAH BATAS MINIMUM\n");
     printf("=========================================================================\n");
-    for (int i = 0; i < n; i++) {
-        if (stok[i] < stokMin[i]) {
-            printf("[!] %s - %s: stok %d %s (minimum %d) -> perlu restock minimal %d %s\n",
-                   kode[i], nama[i], stok[i], satuan[i], stokMin[i],
-                   stokMin[i] - stok[i], satuan[i]);
-            jumlah++;
-        }
-    }
-    if (jumlah == 0)
-        printf("Semua stok barang masih di atas batas minimum.\n");
-    else
-        printf("Total %d barang berada di bawah batas minimum.\n", jumlah);
-    return jumlah;
-}
-
-double hitungTotalRekursif(int stok[], double harga[], int n) {
-    if (n <= 0)
-        return 0.0;
-    return (stok[n - 1] * harga[n - 1]) + hitungTotalRekursif(stok, harga, n - 1);
-}
-
-void isiDataContoh(char kode[][LEN_KODE], char nama[][LEN_NAMA],
-                   char satuan[][LEN_SATUAN], int stok[], int stokMin[],
-                   double harga[], int *n) {
-    const char  *kodeC[]   = {"ATK-01", "ATK-02", "ATK-03", "LAB-01", "ELK-01", "ELK-02"};
-    const char  *namaC[]   = {"Spidol Whiteboard", "Kertas HVS A4", "Tinta Printer",
-                              "Jas Lab", "Kabel HDMI", "Lampu Proyektor"};
-    const char  *satuanC[] = {"pcs", "rim", "botol", "pcs", "pcs", "pcs"};
-    const int    stokC[]   = {40, 6, 3, 15, 8, 1};
-    const int    minC[]    = {20, 10, 5, 10, 5, 2};
-    const double hargaC[]  = {12000, 55000, 85000, 120000, 65000, 1500000};
-    int jumlah = 6;
 
     for (int i = 0; i < jumlah; i++) {
-        salinString(kode[*n], kodeC[i], LEN_KODE);
-        salinString(nama[*n], namaC[i], LEN_NAMA);
-        salinString(satuan[*n], satuanC[i], LEN_SATUAN);
-        stok[*n]    = stokC[i];
-        stokMin[*n] = minC[i];
-        harga[*n]   = hargaC[i];
-        (*n)++;
+        if (stok[i] < minimum[i]) {
+            int selisih = minimum[i] - stok[i];
+            printf("[!] Kode: %-8s | Nama: %-20s | Stok: %-4d | Minimum: %-4d | Kurang: %d\n",
+                   kode[i], nama[i], stok[i], minimum[i], selisih);
+            count++;
+        }
+    }
+
+    if (count == 0) {
+        printf("Semua stok barang dalam kondisi aman (di atas batas minimum).\n");
+    } else {
+        printf("-------------------------------------------------------------------------\n");
+        printf("Total %d barang membutuhkan penambahan stok segera!\n", count);
+    }
+}
+
+// 8. Menghitung total nilai seluruh persediaan secara rekursif
+long long hitungTotalRekursif(int stok[], int harga[], int n) {
+    if (n <= 0) {
+        return 0;
+    }
+    return ((long long)stok[n - 1] * (long long)harga[n - 1]) + hitungTotalRekursif(stok, harga, n - 1);
+}
+
+// Inisialisasi data awal (data contoh untuk demonstrasi)
+void isiDataAwal(char kode[][LEN_KODE], char nama[][LEN_NAMA],
+                 int harga[], int stok[], int minimum[], int *jumlah) {
+    const char kodeContoh[][LEN_KODE] = {"B001", "P001", "S001", "K001", "T001"};
+    const char namaContoh[][LEN_NAMA] = {"Buku Tulis", "Pulpen Gel", "Pensil 2B", "Kertas HVS A4", "Tinta Spidol"};
+    const int hargaContoh[] = {5000, 3500, 2000, 48000, 15000};
+    const int stokContoh[] = {25, 8, 50, 4, 3};
+    const int minContoh[] = {10, 15, 20, 10, 5};
+    int nContoh = 5;
+
+    for (int i = 0; i < nContoh; i++) {
+        stringSalin(kode[*jumlah], kodeContoh[i]);
+        stringSalin(nama[*jumlah], namaContoh[i]);
+        harga[*jumlah] = hargaContoh[i];
+        stok[*jumlah] = stokContoh[i];
+        minimum[*jumlah] = minContoh[i];
+        (*jumlah)++;
     }
 }
 
 int main(void) {
-    char   kode[MAX_BARANG][LEN_KODE];
-    char   nama[MAX_BARANG][LEN_NAMA];
-    char   satuan[MAX_BARANG][LEN_SATUAN];
-    int    stok[MAX_BARANG];
-    int    stokMin[MAX_BARANG];
-    double harga[MAX_BARANG];
-    int    n = 0;
-    int    pilihan;
+    char kode[MAX_BARANG][LEN_KODE];
+    char nama[MAX_BARANG][LEN_NAMA];
+    int harga[MAX_BARANG];
+    int stok[MAX_BARANG];
+    int minimum[MAX_BARANG];
+    int jumlah = 0;
+    int pilihan;
 
-    isiDataContoh(kode, nama, satuan, stok, stokMin, harga, &n);
+    // Memuat data awal untuk demonstrasi
+    isiDataAwal(kode, nama, harga, stok, minimum, &jumlah);
 
     do {
         printf("\n============================================\n");
@@ -339,97 +326,140 @@ int main(void) {
         printf("8. Hitung Total Nilai Persediaan\n");
         printf("0. Keluar\n");
         printf("--------------------------------------------\n");
+        printf("Masukkan pilihan menu [0-8]: ");
 
-        pilihan = bacaInt("Masukkan pilihan menu [0-8]: ", 0);
+        if (scanf("%d", &pilihan) != 1) {
+            bersihkanBuffer();
+            printf("\n[ERROR] Pilihan tidak valid! Masukkan angka 0-8.\n");
+            continue;
+        }
+        bersihkanBuffer();
 
         switch (pilihan) {
             case 1:
-                tambahBarang(kode, nama, satuan, stok, stokMin, harga, &n);
+                tambahBarang(kode, nama, harga, stok, minimum, &jumlah);
                 break;
 
             case 2:
-                tampilkanStok(kode, nama, satuan, stok, stokMin, harga, n);
+                tampilBarang(kode, nama, harga, stok, minimum, jumlah);
                 break;
 
             case 3: {
-                if (n == 0) {
-                    printf("\nBelum ada data barang.\n");
+                if (jumlah == 0) {
+                    printf("\nBelum ada data barang!\n");
                     break;
                 }
-                char kunci[LEN_KODE];
-                bacaString("\nMasukkan kode barang yang ingin ditambah stoknya: ", kunci, sizeof(kunci));
-                int idx = cariIndeksKode(kode, n, kunci);
+                char kodeCari[LEN_KODE];
+                printf("\n--- PENAMBAHAN STOK ---\n");
+                printf("Masukkan kode barang yang ingin ditambah stoknya: ");
+                if (fgets(kodeCari, sizeof(kodeCari), stdin) == NULL) break;
+                bersihkanNewline(kodeCari);
+
+                int idx = cariBarang(kode, jumlah, kodeCari);
                 if (idx == -1) {
-                    printf("[ERROR] Barang dengan kode \"%s\" tidak ditemukan.\n", kunci);
+                    printf("[ERROR] Barang dengan kode \"%s\" tidak ditemukan.\n", kodeCari);
                 } else {
-                    tampilDetailBarang(kode, nama, satuan, stok, stokMin, harga, idx);
-                    int tambah = bacaInt("Masukkan jumlah penambahan stok: ", 1);
-                    tambahStok(&stok[idx], tambah);
-                    printf("\n[SUKSES] Stok %s berhasil ditambah. Stok saat ini: %d %s\n",
-                           nama[idx], stok[idx], satuan[idx]);
+                    tampilDetailBarang(kode, nama, harga, stok, minimum, idx);
+                    int jumlahTambah;
+                    while (1) {
+                        printf("Masukkan jumlah penambahan stok: ");
+                        if (scanf("%d", &jumlahTambah) == 1 && jumlahTambah > 0) {
+                            bersihkanBuffer();
+                            break;
+                        }
+                        bersihkanBuffer();
+                        printf("[ERROR] Jumlah penambahan harus berupa angka lebih dari 0!\n");
+                    }
+                    tambahStok(&stok[idx], jumlahTambah);
+                    printf("\n[SUKSES] Stok %s berhasil ditambah. Stok saat ini: %d\n", nama[idx], stok[idx]);
                 }
                 break;
             }
 
             case 4: {
-                if (n == 0) {
-                    printf("\nBelum ada data barang.\n");
+                if (jumlah == 0) {
+                    printf("\nBelum ada data barang!\n");
                     break;
                 }
-                char kunci[LEN_KODE];
-                bacaString("\nMasukkan kode barang yang ingin dikurangi stoknya: ", kunci, sizeof(kunci));
-                int idx = cariIndeksKode(kode, n, kunci);
+                char kodeCari[LEN_KODE];
+                printf("\n--- PENGURANGAN STOK ---\n");
+                printf("Masukkan kode barang yang ingin dikurangi stoknya: ");
+                if (fgets(kodeCari, sizeof(kodeCari), stdin) == NULL) break;
+                bersihkanNewline(kodeCari);
+
+                int idx = cariBarang(kode, jumlah, kodeCari);
                 if (idx == -1) {
-                    printf("[ERROR] Barang dengan kode \"%s\" tidak ditemukan.\n", kunci);
+                    printf("[ERROR] Barang dengan kode \"%s\" tidak ditemukan.\n", kodeCari);
                 } else {
-                    tampilDetailBarang(kode, nama, satuan, stok, stokMin, harga, idx);
-                    int kurang = bacaInt("Masukkan jumlah pengurangan stok: ", 1);
-                    if (kurangiStok(&stok[idx], kurang)) {
-                        printf("\n[SUKSES] Stok %s berhasil dikurangi. Sisa stok: %d %s\n",
-                               nama[idx], stok[idx], satuan[idx]);
-                        if (stok[idx] < stokMin[idx]) {
-                            printf("[PERINGATAN] Stok %s di bawah batas minimum (%d %s)!\n",
-                                   nama[idx], stokMin[idx], satuan[idx]);
+                    tampilDetailBarang(kode, nama, harga, stok, minimum, idx);
+                    int jumlahKurang;
+                    while (1) {
+                        printf("Masukkan jumlah pengurangan stok: ");
+                        if (scanf("%d", &jumlahKurang) == 1 && jumlahKurang > 0) {
+                            bersihkanBuffer();
+                            break;
+                        }
+                        bersihkanBuffer();
+                        printf("[ERROR] Jumlah pengurangan harus berupa angka lebih dari 0!\n");
+                    }
+                    if (kurangiStok(&stok[idx], jumlahKurang)) {
+                        printf("\n[SUKSES] Stok %s berhasil dikurangi. Sisa stok: %d\n", nama[idx], stok[idx]);
+                        if (stok[idx] < minimum[idx]) {
+                            printf("[PERINGATAN] Stok %s saat ini berada di bawah batas minimum (%d)!\n", nama[idx], minimum[idx]);
                         }
                     } else {
-                        printf("\n[ERROR] Pengurangan gagal! Stok tersedia (%d %s) tidak mencukupi untuk dikurangi %d %s.\n",
-                               stok[idx], satuan[idx], kurang, satuan[idx]);
+                        printf("\n[ERROR] Pengurangan gagal! Stok tersedia (%d) tidak mencukupi untuk dikurangi %d.\n", stok[idx], jumlahKurang);
                     }
                 }
                 break;
             }
 
-            case 5:
-                cariBarang(kode, nama, satuan, stok, stokMin, harga, n);
+            case 5: {
+                if (jumlah == 0) {
+                    printf("\nBelum ada data barang!\n");
+                    break;
+                }
+                char kodeCari[LEN_KODE];
+                printf("\nMasukkan kode barang yang dicari: ");
+                if (fgets(kodeCari, sizeof(kodeCari), stdin) == NULL) break;
+                bersihkanNewline(kodeCari);
+
+                int idx = cariBarang(kode, jumlah, kodeCari);
+                if (idx == -1) {
+                    printf("[INFO] Barang dengan kode \"%s\" tidak ditemukan.\n", kodeCari);
+                } else {
+                    tampilDetailBarang(kode, nama, harga, stok, minimum, idx);
+                }
                 break;
+            }
 
             case 6:
-                analisisStok(kode, nama, satuan, stok, n);
+                analisisStok(kode, nama, stok, jumlah);
                 break;
 
             case 7:
-                periksaPeringatan(kode, nama, satuan, stok, stokMin, n);
+                periksaPeringatan(kode, nama, stok, minimum, jumlah);
                 break;
 
             case 8: {
-                if (n == 0) {
-                    printf("\nBelum ada data barang.\n");
+                if (jumlah == 0) {
+                    printf("\nBelum ada data barang!\n");
                     break;
                 }
+                long long totalNilai = hitungTotalRekursif(stok, harga, jumlah);
                 printf("\n============================================\n");
                 printf("       TOTAL NILAI SELURUH PERSEDIAAN\n");
                 printf("============================================\n");
-                printf("Total Nilai Persediaan: Rp %.0f\n",
-                       hitungTotalRekursif(stok, harga, n));
+                printf("Total Nilai Persediaan: Rp%lld\n", totalNilai);
                 break;
             }
 
             case 0:
-                printf("\nTerima kasih telah menggunakan program!\n");
+                printf("\nTerima kasih telah menggunakan Sistem Pengelolaan Persediaan ATK!\n");
                 break;
 
             default:
-                printf("\nPilihan tidak valid! Silakan coba lagi.\n");
+                printf("\n[ERROR] Pilihan menu tidak valid! Silakan pilih menu yang tersedia.\n");
                 break;
         }
 
