@@ -44,7 +44,7 @@ void bersihkanBuffer(void) {
     while ((c = getchar()) != '\n' && c != EOF) { }
 }
 
-// 5. Mencari barang berdasarkan kode (mengembalikan indeks atau -1 jika tidak ada)
+// 5. Mencari barang berdasarkan kode (JESY)
 int cariBarang(char kode[][LEN_KODE], int jumlah, char kode_cari[]) {
     for (int i = 0; i < jumlah; i++) {
         if (stringSama(kode[i], kode_cari)) {
@@ -54,7 +54,7 @@ int cariBarang(char kode[][LEN_KODE], int jumlah, char kode_cari[]) {
     return -1;
 }
 
-// 1. Memasukkan data alat tulis baru (tanpa satuan: kode, nama, harga satuan, stok, batas minimum)
+// 1. Memasukkan data alat tulis baru (FACHRIZA)
 void tambahBarang(char kode[][LEN_KODE], char nama[][LEN_NAMA],
                   int harga[], int stok[], int minimum[], int *jumlah) {
     if (*jumlah >= MAX_BARANG) {
@@ -150,7 +150,7 @@ void tambahBarang(char kode[][LEN_KODE], char nama[][LEN_NAMA],
     }
 }
 
-// 2. Menampilkan seluruh daftar alat tulis
+// 2. Menampilkan seluruh daftar alat tulis (JESY)
 void tampilBarang(char kode[][LEN_KODE], char nama[][LEN_NAMA],
                   int harga[], int stok[], int minimum[], int jumlah) {
     if (jumlah == 0) {
@@ -188,12 +188,12 @@ void tampilDetailBarang(char kode[][LEN_KODE], char nama[][LEN_NAMA],
     printf("====================================\n");
 }
 
-// 3. Mencatat penambahan stok barang (menggunakan pointer)
+// 3. Mencatat penambahan stok barang menggunakan pointer (FEYZA)
 void tambahStok(int *stokBarang, int jumlahTambah) {
     *stokBarang = *stokBarang + jumlahTambah;
 }
 
-// 4. Mencatat pengurangan stok barang (menggunakan pointer)
+// 4. Mencatat pengurangan stok barang menggunakan pointer (FEYZA)
 int kurangiStok(int *stokBarang, int jumlahKurang) {
     if (jumlahKurang > *stokBarang) {
         return 0; // Gagal karena melebihi stok tersedia
@@ -202,7 +202,7 @@ int kurangiStok(int *stokBarang, int jumlahKurang) {
     return 1; // Berhasil
 }
 
-// 6. Menampilkan barang dengan stok terbanyak dan tersedikit
+// 6. Menampilkan barang dengan stok terbanyak dan tersedikit (BENNY)
 void analisisStok(char kode[][LEN_KODE], char nama[][LEN_NAMA], int stok[], int jumlah) {
     if (jumlah == 0) {
         printf("\nBelum ada barang yang terdaftar.\n");
@@ -241,7 +241,7 @@ void analisisStok(char kode[][LEN_KODE], char nama[][LEN_NAMA], int stok[], int 
     }
 }
 
-// 7. Memberikan peringatan jika stok berada di bawah batas minimum
+// 7. Memberikan peringatan jika stok berada di bawah batas minimum (AZURA)
 void periksaPeringatan(char kode[][LEN_KODE], char nama[][LEN_NAMA],
                        int stok[], int minimum[], int jumlah) {
     if (jumlah == 0) {
@@ -271,7 +271,7 @@ void periksaPeringatan(char kode[][LEN_KODE], char nama[][LEN_NAMA],
     }
 }
 
-// 8. Menghitung total nilai seluruh persediaan secara rekursif
+// 8. Menghitung total nilai seluruh persediaan secara rekursif (AZURA)
 long long hitungTotalRekursif(int stok[], int harga[], int n) {
     if (n <= 0) {
         return 0;
