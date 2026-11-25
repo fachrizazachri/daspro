@@ -12,15 +12,18 @@ int main() {
 
         printf("\n                 MENU UTAMA\n\n");
 
-        printf("1. Tambah Data Alat Tulis\n");
-        printf("2. Lihat Daftar Alat Tulis\n");
-        printf("3. Tambah Stok Persediaan Barang\n");
-        printf("4. Lihat Jumlah Stok Barang\n");
-        printf("5. Lihat Barang dengan Stok Terbanyak\n");
-        printf("6. Keluar dari Program\n");
+        printf("1. Tambah Data Alat Tulis Baru\n");
+        printf("2. Tampilkan Seluruh Daftar Alat Tulis\n");
+        printf("3. Tambah Stok Barang\n");
+        printf("4. Kurangi Stok Barang\n");
+        printf("5. Cari Barang Berdasarkan Kode\n");
+        printf("6. Tampilkan Barang Stok Terbanyak & Tersedikit\n");
+        printf("7. Tampilkan Peringatan Stok di Bawah Batas Minimum\n");
+        printf("8. Hitung Total Nilai Persediaan\n");
+        printf("0. Keluar\n");
 
         printf("--------------------------------------------\n");
-        printf("Masukkan pilihan menu [1-6]: ");
+        printf("Masukkan pilihan menu [1-8]: ");
         scanf("%d", &pilihan);
 
         switch (pilihan) {
